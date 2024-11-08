@@ -26,6 +26,11 @@ V1.03
 	-Add set Theme
 		-Add get Theme_Dark
 		-Add get Theme_Light
+V1.04
+	-Add get and set SheetWidth - Set a value greater than 0 to define a custom width
+		-Default: 0
+	-Add TextHorizontalAlignment to Type AS_BottomActionSheet_ItemProperties
+		-Left, Center, Right
 #End If
 
 #Event: ActionButtonClicked
@@ -36,7 +41,7 @@ V1.03
 
 Sub Class_Globals
 	
-	Type AS_BottomActionSheet_ItemProperties(Height As Float,LeftGap As Float,xFont As B4XFont,TextColor As Int,IconWidthHeight As Float,SeperatorVisible As Boolean,SeperatorColor As Int)
+	Type AS_BottomActionSheet_ItemProperties(Height As Float,LeftGap As Float,xFont As B4XFont,TextColor As Int,IconWidthHeight As Float,SeperatorVisible As Boolean,SeperatorColor As Int,TextHorizontalAlignment As String)
 	Type AS_BottomActionSheet_Item(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitmap,Value As Object,ItemProperties As AS_BottomActionSheet_ItemProperties,ItemSmallIconProperties As AS_BottomActionSheet_ItemSmallIconProperties)
 	Type AS_BottomActionSheet_ItemViews(BackgroundPanel As B4XView,TextLabel As B4XView,SeperatorPanel As B4XView,IconImageView As B4XView)
 	Type AS_BottomActionSheet_ItemSmallIconProperties(HorizontalAlignment As String,VerticalAlignment As String,WidthHeight As Float,LeftGap As Float)
@@ -63,6 +68,7 @@ Sub Class_Globals
 	Private m_BodyColor As Int
 	Private m_ActionButtonVisible As Boolean
 	Private m_DragIndicatorColor As Int
+	Private m_SheetWidth As Float = 0
 	
 	Private lst_Items As List
 	
@@ -113,7 +119,7 @@ Public Sub Initialize(Callback As Object,EventName As String,Parent As B4XView)
 	xParent = Parent
 	lst_Items.Initialize
 	
-	g_ItemProperties = CreateAS_BottomActionSheet_ItemProperties(60dip,20dip,xui.CreateDefaultFont(18),xui.Color_White,30dip,False,xui.Color_White)
+	g_ItemProperties = CreateAS_BottomActionSheet_ItemProperties(60dip,20dip,xui.CreateDefaultFont(18),xui.Color_White,30dip,False,xui.Color_White,"LEFT")
 	g_ItemSmallIconProperties = CreateAS_BottomActionSheet_ItemSmallIconProperties(getHorizontalAlignment_AfterText,getVerticalAlignment_Top,15dip,5dip)
 	
 	xpnl_Header = xui.CreatePanel("")
@@ -149,6 +155,7 @@ Private Sub AddItemIntern(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitma
 	ItemProperties.TextColor = g_ItemProperties.TextColor
 	ItemProperties.xFont = g_ItemProperties.xFont
 	ItemProperties.SeperatorColor = g_ItemProperties.SeperatorColor
+	ItemProperties.TextHorizontalAlignment = g_ItemProperties.TextHorizontalAlignment
 	
 	Dim ItemSmallIconProperties As AS_BottomActionSheet_ItemSmallIconProperties
 	ItemSmallIconProperties.Initialize
@@ -163,6 +170,8 @@ Private Sub AddItemIntern(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitma
 End Sub
 
 Public Sub ShowPicker
+	
+	Dim SheetWidth As Float = IIf(m_SheetWidth=0,xParent.Width,m_SheetWidth)
 	
 	Dim ListHeight As Float = g_ItemProperties.Height*lst_Items.Size
 	Dim BodyHeight As Float = ListHeight
@@ -182,11 +191,11 @@ Public Sub ShowPicker
 	
 	BottomCard.Initialize(Me,"BottomCard")
 	BottomCard.BodyDrag = True
-	BottomCard.Create(xParent,BodyHeight,BodyHeight,m_HeaderHeight,xParent.Width,BottomCard.Orientation_MIDDLE)
+	BottomCard.Create(xParent,BodyHeight,BodyHeight,m_HeaderHeight,SheetWidth,BottomCard.Orientation_MIDDLE)
 	
 	xpnl_Header.Color = m_HeaderColor
 	
-	xpnl_Header.AddView(xpnl_DragIndicator,xParent.Width/2 - 70dip/2,m_HeaderHeight - 6dip,70dip,6dip)
+	xpnl_Header.AddView(xpnl_DragIndicator,SheetWidth/2 - 70dip/2,m_HeaderHeight - 6dip,70dip,6dip)
 	Dim ARGB() As Int = GetARGB(m_DragIndicatorColor)
 	xpnl_DragIndicator.SetColorAndBorder(xui.Color_ARGB(80,ARGB(1),ARGB(2),ARGB(3)),0,0,3dip)
 	
@@ -200,15 +209,17 @@ Public Sub ShowPicker
 		xlbl_ActionButton.SetTextAlignment("CENTER","CENTER")
 		
 		Dim ConfirmationButtoHeight As Float = 40dip
+		Dim ConfirmationButtoWidth As Float = 220dip
+		If SheetWidth < ConfirmationButtoWidth Then ConfirmationButtoWidth = SheetWidth - 20dip
 		
-		BottomCard.BodyPanel.AddView(xlbl_ActionButton,xParent.Width/2 - 220dip/2,BodyHeight - ConfirmationButtoHeight - SafeAreaHeight,220dip,ConfirmationButtoHeight)
+		BottomCard.BodyPanel.AddView(xlbl_ActionButton,SheetWidth/2 - ConfirmationButtoWidth/2,BodyHeight - ConfirmationButtoHeight - SafeAreaHeight,ConfirmationButtoWidth,ConfirmationButtoHeight)
 	
 	End If
 	
 
 	BottomCard.BodyPanel.Color = m_BodyColor
-	BottomCard.HeaderPanel.AddView(xpnl_Header,0,0,xParent.Width,m_HeaderHeight)
-	BottomCard.BodyPanel.AddView(xpnl_Body,0,0,xParent.Width,ListHeight)
+	BottomCard.HeaderPanel.AddView(xpnl_Header,0,0,SheetWidth,m_HeaderHeight)
+	BottomCard.BodyPanel.AddView(xpnl_Body,0,0,SheetWidth,ListHeight)
 	BottomCard.CornerRadius_Header = 30dip/2
 	
 	xpnl_ItemsBackground = xui.CreatePanel("")
@@ -255,10 +266,16 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 	Dim xlbl_Text As B4XView = CreateLabel("")
 	xlbl_Text.Text = Item.Text
 	xlbl_Text.TextColor = Item.ItemProperties.TextColor
-	xlbl_Text.SetTextAlignment("CENTER","LEFT")
+	xlbl_Text.SetTextAlignment("CENTER",Item.ItemProperties.TextHorizontalAlignment.ToUpperCase)
 	xlbl_Text.Font = Item.ItemProperties.xFont
 
-	xpnl_Background.AddView(xlbl_Text,IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2 + Item.ItemProperties.IconWidthHeight,Item.ItemProperties.LeftGap),0,xpnl_Background.Width - (IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2,Item.ItemProperties.LeftGap))*2 + Item.ItemProperties.IconWidthHeight,xpnl_Background.Height)
+	'xpnl_Background.AddView(xlbl_Text,IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2 + Item.ItemProperties.IconWidthHeight,Item.ItemProperties.LeftGap),0,xpnl_Background.Width - (IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2,Item.ItemProperties.LeftGap))*2 + Item.ItemProperties.IconWidthHeight,xpnl_Background.Height)
+	
+	Dim leftGap As Int = IIf(Item.Icon.IsInitialized, Item.ItemProperties.LeftGap * 2 + Item.ItemProperties.IconWidthHeight, Item.ItemProperties.LeftGap)
+	Dim availableWidth As Int = xpnl_Background.Width - (leftGap * 2)
+	Dim leftPosition As Int = leftGap
+	Dim textWidth As Int = availableWidth
+	xpnl_Background.AddView(xlbl_Text, leftPosition, 0, textWidth, xpnl_Background.Height)
 	
 	Dim ARGB() As Int = GetARGB(Item.ItemProperties.SeperatorColor)
 	
@@ -273,6 +290,17 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 	
 	Dim xiv_Icon As B4XView = CreateImageView
 	xpnl_Background.AddView(xiv_Icon,Item.ItemProperties.LeftGap,xpnl_Background.Height/2 - Item.ItemProperties.IconWidthHeight/2,Item.ItemProperties.IconWidthHeight,Item.ItemProperties.IconWidthHeight)
+	
+	Select Item.ItemProperties.TextHorizontalAlignment.ToUpperCase
+		Case "LEFT"
+			xiv_Icon.Left = Item.ItemProperties.LeftGap
+		Case "CENTER"
+			xlbl_Text.Left = Item.ItemProperties.LeftGap
+			xlbl_Text.Width = xpnl_Body.Width - Item.ItemProperties.LeftGap*2
+			xiv_Icon.Left = xpnl_Body.Width/2 - MeasureTextWidth(xlbl_Text.Text,xlbl_Text.Font)/2 - xiv_Icon.Width - Item.ItemProperties.LeftGap
+		Case "RIGHT"
+			xiv_Icon.Left = xpnl_Body.Width - Item.ItemProperties.LeftGap - xiv_Icon.Width
+	End Select
 	
 	If Item.Icon.IsInitialized Then
 		xiv_Icon.SetBitmap(Item.Icon.Resize(Item.ItemProperties.IconWidthHeight,Item.ItemProperties.IconWidthHeight,True))
@@ -290,7 +318,16 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 		Dim SmallIconTop As Float
 		Select Item.ItemSmallIconProperties.HorizontalAlignment
 			Case getHorizontalAlignment_AfterText
-				SmallIconLeft = xlbl_Text.Left + MeasureTextWidth(xlbl_Text.Text,xlbl_Text.Font) + Item.ItemSmallIconProperties.LeftGap
+				
+				Select Item.ItemProperties.TextHorizontalAlignment.ToUpperCase
+					Case "LEFT"
+						SmallIconLeft = xlbl_Text.Left + MeasureTextWidth(xlbl_Text.Text,xlbl_Text.Font) + Item.ItemSmallIconProperties.LeftGap
+					Case "CENTER"
+						SmallIconLeft = xlbl_Text.Left + xlbl_Text.Width/2 + (MeasureTextWidth(xlbl_Text.Text,xlbl_Text.Font))/2 + Item.ItemSmallIconProperties.LeftGap
+					Case "RIGHT"
+						SmallIconLeft = xlbl_Text.Left + xlbl_Text.Width - Item.ItemSmallIconProperties.WidthHeight - MeasureTextWidth(xlbl_Text.Text,xlbl_Text.Font) - Item.ItemSmallIconProperties.LeftGap
+				End Select
+				
 			Case getHorizontalAlignment_BeforeText
 				SmallIconLeft = xlbl_Text.Left - Item.ItemSmallIconProperties.WidthHeight - Item.ItemSmallIconProperties.LeftGap
 		End Select
@@ -319,6 +356,17 @@ End Sub
 
 #Region Properties
 
+'Set the value to greater than 0 to set a custom width
+'Set the value to 0 to use the full screen width
+'Default: 0
+Public Sub setSheetWidth(SheetWidth As Float)
+	m_SheetWidth = SheetWidth
+End Sub
+
+Public Sub getSheetWidth As Float
+	Return m_SheetWidth
+End Sub
+
 Public Sub setDragIndicatorColor(Color As Int)
 	m_DragIndicatorColor = Color
 End Sub
@@ -327,6 +375,7 @@ Public Sub getDragIndicatorColor As Int
 	Return m_DragIndicatorColor
 End Sub
 
+'TextHorizontalAlignment - Left, Center, Right
 Public Sub getItemProperties As AS_BottomActionSheet_ItemProperties
 	Return g_ItemProperties
 End Sub
@@ -546,19 +595,6 @@ Private Sub CreateAS_BottomActionSheet_Item (Text As String, Icon As B4XBitmap, 
 	Return t1
 End Sub
 
-Private Sub CreateAS_BottomActionSheet_ItemProperties (Height As Float, LeftGap As Float, xFont As B4XFont, TextColor As Int, IconWidthHeight As Float, SeperatorVisible As Boolean, SeperatorColor As Int) As AS_BottomActionSheet_ItemProperties
-	Dim t1 As AS_BottomActionSheet_ItemProperties
-	t1.Initialize
-	t1.Height = Height
-	t1.LeftGap = LeftGap
-	t1.xFont = xFont
-	t1.TextColor = TextColor
-	t1.IconWidthHeight = IconWidthHeight
-	t1.SeperatorVisible = SeperatorVisible
-	t1.SeperatorColor = SeperatorColor
-	Return t1
-End Sub
-
 Private Sub CreateAS_BottomActionSheet_ItemViews (BackgroundPanel As B4XView, TextLabel As B4XView, SeperatorPanel As B4XView, IconImageView As B4XView) As AS_BottomActionSheet_ItemViews
 	Dim t1 As AS_BottomActionSheet_ItemViews
 	t1.Initialize
@@ -576,6 +612,20 @@ Private Sub CreateAS_BottomActionSheet_ItemSmallIconProperties (HorizontalAlignm
 	t1.VerticalAlignment = VerticalAlignment
 	t1.WidthHeight = WidthHeight
 	t1.LeftGap = LeftGap
+	Return t1
+End Sub
+
+Private Sub CreateAS_BottomActionSheet_ItemProperties (Height As Float, LeftGap As Float, xFont As B4XFont, TextColor As Int, IconWidthHeight As Float, SeperatorVisible As Boolean, SeperatorColor As Int, TextHorizontalAlignment As String) As AS_BottomActionSheet_ItemProperties
+	Dim t1 As AS_BottomActionSheet_ItemProperties
+	t1.Initialize
+	t1.Height = Height
+	t1.LeftGap = LeftGap
+	t1.xFont = xFont
+	t1.TextColor = TextColor
+	t1.IconWidthHeight = IconWidthHeight
+	t1.SeperatorVisible = SeperatorVisible
+	t1.SeperatorColor = SeperatorColor
+	t1.TextHorizontalAlignment = TextHorizontalAlignment
 	Return t1
 End Sub
 

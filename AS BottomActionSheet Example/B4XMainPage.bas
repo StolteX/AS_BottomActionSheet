@@ -36,7 +36,7 @@ Private Sub OpenSheet(DarkMode As Boolean)
 	
 	BottomActionSheet.Theme = IIf(DarkMode,BottomActionSheet.Theme_Dark,BottomActionSheet.Theme_Light)
 	BottomActionSheet.ActionButtonVisible = True
-	
+	BottomActionSheet.ItemProperties.TextHorizontalAlignment = "CENTER"
 	BottomActionSheet.AddItem("Item #1",Null,0)
 	BottomActionSheet.AddItem("Item #2",Null,1)
 	BottomActionSheet.AddItem("Item #3",Null,2)

@@ -7,6 +7,6 @@ ModuleBreakpoints2=
 ModuleClosedNodes0=4
 ModuleClosedNodes1=
 ModuleClosedNodes2=1
-NavigationStack=AS_BottomActionSheet,setColor,271,0,AS_BottomActionSheet,FontToBitmap,401,0,AS_BottomActionSheet,getItemProperties,268,0,AS_BottomActionSheet,MeasureTextWidth,440,0,AS_BottomActionSheet,MeasureTextHeight,457,0,AS_BottomActionSheet,Initialize,71,0,B4XMainPage,OpenDarkDatePicker,40,2,AS_BottomActionSheet,AddItemIntern,146,0,AS_BottomActionSheet,CreateItemIntern,295,6,B4XMainPage,OpenSheet,31,6
+NavigationStack=AS_BottomActionSheet,AddItemIntern,150,1,AS_BottomActionSheet,CreateAS_BottomActionSheet_Item,563,0,AS_BottomActionSheet,CreateAS_BottomActionSheet_ItemSmallIconProperties,585,0,AS_BottomActionSheet,CreateAS_BottomActionSheet_ItemProperties,597,0,AS_BottomActionSheet,Initialize,115,3,AS_BottomActionSheet,setTheme,107,0,B4XMainPage,B4XPage_Created,20,0,AS_BottomActionSheet,Class_Globals,64,6,AS_BottomActionSheet,CreateItemIntern,293,6,B4XMainPage,OpenSheet,29,6
 SelectedBuild=0
 VisibleModules=2,1
