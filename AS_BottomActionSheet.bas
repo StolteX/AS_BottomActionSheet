@@ -31,6 +31,10 @@ V1.04
 		-Default: 0
 	-Add TextHorizontalAlignment to Type AS_BottomActionSheet_ItemProperties
 		-Left, Center, Right
+V1.05
+	-Add IconHorizontalAlignment to Type AS_BottomActionSheet_ItemProperties
+		-Auto, Left, Right
+		-Default: Auto
 #End If
 
 #Event: ActionButtonClicked
@@ -41,7 +45,7 @@ V1.04
 
 Sub Class_Globals
 	
-	Type AS_BottomActionSheet_ItemProperties(Height As Float,LeftGap As Float,xFont As B4XFont,TextColor As Int,IconWidthHeight As Float,SeperatorVisible As Boolean,SeperatorColor As Int,TextHorizontalAlignment As String)
+	Type AS_BottomActionSheet_ItemProperties(Height As Float,LeftGap As Float,xFont As B4XFont,TextColor As Int,IconWidthHeight As Float,SeperatorVisible As Boolean,SeperatorColor As Int,TextHorizontalAlignment As String,IconHorizontalAlignment As String)
 	Type AS_BottomActionSheet_Item(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitmap,Value As Object,ItemProperties As AS_BottomActionSheet_ItemProperties,ItemSmallIconProperties As AS_BottomActionSheet_ItemSmallIconProperties)
 	Type AS_BottomActionSheet_ItemViews(BackgroundPanel As B4XView,TextLabel As B4XView,SeperatorPanel As B4XView,IconImageView As B4XView)
 	Type AS_BottomActionSheet_ItemSmallIconProperties(HorizontalAlignment As String,VerticalAlignment As String,WidthHeight As Float,LeftGap As Float)
@@ -156,6 +160,7 @@ Private Sub AddItemIntern(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitma
 	ItemProperties.xFont = g_ItemProperties.xFont
 	ItemProperties.SeperatorColor = g_ItemProperties.SeperatorColor
 	ItemProperties.TextHorizontalAlignment = g_ItemProperties.TextHorizontalAlignment
+	ItemProperties.IconHorizontalAlignment = g_ItemProperties.IconHorizontalAlignment
 	
 	Dim ItemSmallIconProperties As AS_BottomActionSheet_ItemSmallIconProperties
 	ItemSmallIconProperties.Initialize
@@ -276,7 +281,7 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 	Dim leftPosition As Int = leftGap
 	Dim textWidth As Int = availableWidth
 	xpnl_Background.AddView(xlbl_Text, leftPosition, 0, textWidth, xpnl_Background.Height)
-	
+	'xlbl_Text.Color = xui.Color_Red
 	Dim ARGB() As Int = GetARGB(Item.ItemProperties.SeperatorColor)
 	
 	Dim xpnl_Seperator As B4XView = xui.CreatePanel("")
@@ -293,13 +298,46 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 	
 	Select Item.ItemProperties.TextHorizontalAlignment.ToUpperCase
 		Case "LEFT"
-			xiv_Icon.Left = Item.ItemProperties.LeftGap
+			
+			Select Item.ItemProperties.IconHorizontalAlignment.ToUpperCase
+				Case getIconHorizontalAlignment_Auto, getIconHorizontalAlignment_Left
+					xiv_Icon.Left = Item.ItemProperties.LeftGap
+					If Item.Icon.IsInitialized Then xlbl_Text.Width = xlbl_Text.Width + xiv_Icon.Width + Item.ItemProperties.LeftGap
+				Case getIconHorizontalAlignment_Right
+					xiv_Icon.Left = xpnl_Body.Width - Item.ItemProperties.LeftGap - xiv_Icon.Width
+					If Item.Icon.IsInitialized Then
+						xlbl_Text.Left = Item.ItemProperties.LeftGap
+						xlbl_Text.Width = xlbl_Text.Width + Item.ItemProperties.LeftGap + xiv_Icon.Width
+					End If
+			End Select
+			
 		Case "CENTER"
-			xlbl_Text.Left = Item.ItemProperties.LeftGap
-			xlbl_Text.Width = xpnl_Body.Width - Item.ItemProperties.LeftGap*2
-			xiv_Icon.Left = xpnl_Body.Width/2 - MeasureTextWidth(xlbl_Text.Text,xlbl_Text.Font)/2 - xiv_Icon.Width - Item.ItemProperties.LeftGap
+			
+			Select Item.ItemProperties.IconHorizontalAlignment.ToUpperCase
+				Case getIconHorizontalAlignment_Auto
+					xlbl_Text.Left = Item.ItemProperties.LeftGap
+					xlbl_Text.Width = xpnl_Body.Width - Item.ItemProperties.LeftGap*2
+					xiv_Icon.Left = xpnl_Body.Width/2 - MeasureTextWidth(xlbl_Text.Text,xlbl_Text.Font)/2 - xiv_Icon.Width - Item.ItemProperties.LeftGap
+				Case getIconHorizontalAlignment_Left
+					xiv_Icon.Left = Item.ItemProperties.LeftGap
+				Case getIconHorizontalAlignment_Right
+					xiv_Icon.Left = xpnl_Body.Width - Item.ItemProperties.LeftGap - xiv_Icon.Width
+			End Select
+			
 		Case "RIGHT"
-			xiv_Icon.Left = xpnl_Body.Width - Item.ItemProperties.LeftGap - xiv_Icon.Width
+			
+			Select Item.ItemProperties.IconHorizontalAlignment.ToUpperCase
+				Case getIconHorizontalAlignment_Auto, getIconHorizontalAlignment_Right
+					xiv_Icon.Left = xpnl_Body.Width - Item.ItemProperties.LeftGap - xiv_Icon.Width		
+					If Item.Icon.IsInitialized Then 
+						xlbl_Text.Left = Item.ItemProperties.LeftGap
+						xlbl_Text.Width = xlbl_Text.Width + Item.ItemProperties.LeftGap + xiv_Icon.Width
+					End If
+				Case getIconHorizontalAlignment_Left
+					xiv_Icon.Left = Item.ItemProperties.LeftGap
+					If Item.Icon.IsInitialized Then xlbl_Text.Width = xlbl_Text.Width + xiv_Icon.Width + Item.ItemProperties.LeftGap
+			End Select
+			
 	End Select
 	
 	If Item.Icon.IsInitialized Then
@@ -577,6 +615,21 @@ End Sub
 
 Public Sub getVerticalAlignment_Bottom As String
 	Return "Bottom"
+End Sub
+
+'<code>BottomActionSheet.ItemProperties.IconHorizontalAlignment = BottomActionSheet.IconHorizontalAlignment_Auto</code>
+Public Sub getIconHorizontalAlignment_Auto As String
+	Return "Auto".ToUpperCase
+End Sub
+
+'<code>BottomActionSheet.ItemProperties.IconHorizontalAlignment = BottomActionSheet.IconHorizontalAlignment_Left</code>
+Public Sub getIconHorizontalAlignment_Left As String
+	Return "Left".ToUpperCase
+End Sub
+
+'<code>BottomActionSheet.ItemProperties.IconHorizontalAlignment = BottomActionSheet.IconHorizontalAlignment_Right</code>
+Public Sub getIconHorizontalAlignment_Right As String
+	Return "Right".ToUpperCase
 End Sub
 
 #End Region
