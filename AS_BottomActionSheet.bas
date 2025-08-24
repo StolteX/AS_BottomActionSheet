@@ -35,6 +35,10 @@ V1.05
 	-Add IconHorizontalAlignment to Type AS_BottomActionSheet_ItemProperties
 		-Auto, Left, Right
 		-Default: Auto
+V1.06
+	-New AddItemRow - Add items side by side
+	-New CreateItem and CreateItem2, does the same as AddItem and AddItem2 but it is not added to the list
+		-is needed for AddItemRow
 #End If
 
 #Event: ActionButtonClicked
@@ -149,7 +153,23 @@ Public Sub AddItem2(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitmap,Valu
 	Return AddItemIntern(Text,Icon,SmallIcon,Value)
 End Sub
 
-Private Sub AddItemIntern(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitmap,Value As Object) As AS_BottomActionSheet_Item
+'Expect: List Of AS_BottomActionSheet_Item (build via CreateItem / CreateItem2)
+Public Sub AddItemRow(Items As List)
+	If Items.IsInitialized = False Or Items.Size = 0 Then Return
+	lst_Items.Add(Items)
+End Sub
+
+
+' Public factories to build items without adding them to the list
+Public Sub CreateItem(Text As String, Icon As B4XBitmap, Value As Object) As AS_BottomActionSheet_Item
+	Return BuildItem(Text, Icon, Null, Value)
+End Sub
+
+Public Sub CreateItem2(Text As String, Icon As B4XBitmap, SmallIcon As B4XBitmap, Value As Object) As AS_BottomActionSheet_Item
+	Return BuildItem(Text, Icon, SmallIcon, Value)
+End Sub
+
+Private Sub BuildItem(Text As String, Icon As B4XBitmap, SmallIcon As B4XBitmap, Value As Object) As AS_BottomActionSheet_Item
 	Dim ItemProperties As AS_BottomActionSheet_ItemProperties
 	ItemProperties.Initialize
 	ItemProperties.Height = g_ItemProperties.Height
@@ -161,15 +181,19 @@ Private Sub AddItemIntern(Text As String,Icon As B4XBitmap,SmallIcon As B4XBitma
 	ItemProperties.SeperatorColor = g_ItemProperties.SeperatorColor
 	ItemProperties.TextHorizontalAlignment = g_ItemProperties.TextHorizontalAlignment
 	ItemProperties.IconHorizontalAlignment = g_ItemProperties.IconHorizontalAlignment
-	
+    
 	Dim ItemSmallIconProperties As AS_BottomActionSheet_ItemSmallIconProperties
 	ItemSmallIconProperties.Initialize
 	ItemSmallIconProperties.HorizontalAlignment = g_ItemSmallIconProperties.HorizontalAlignment
 	ItemSmallIconProperties.VerticalAlignment = g_ItemSmallIconProperties.VerticalAlignment
 	ItemSmallIconProperties.LeftGap = g_ItemSmallIconProperties.LeftGap
 	ItemSmallIconProperties.WidthHeight = g_ItemSmallIconProperties.WidthHeight
-	
-	Dim Item As AS_BottomActionSheet_Item = CreateAS_BottomActionSheet_Item(Text,Icon,SmallIcon,Value,ItemProperties,ItemSmallIconProperties)
+    
+	Return CreateAS_BottomActionSheet_Item(Text, Icon, SmallIcon, Value, ItemProperties, ItemSmallIconProperties)
+End Sub
+
+Private Sub AddItemIntern(Text As String, Icon As B4XBitmap, SmallIcon As B4XBitmap, Value As Object) As AS_BottomActionSheet_Item
+	Dim Item As AS_BottomActionSheet_Item = BuildItem(Text, Icon, SmallIcon, Value)
 	lst_Items.Add(Item)
 	Return Item
 End Sub
@@ -247,11 +271,26 @@ End Sub
 'Gets the item views for a value
 Public Sub GetItemViews(Value As Object) As AS_BottomActionSheet_ItemViews
 	For i = 0 To lst_Items.Size -1
-		Dim Item As AS_BottomActionSheet_Item = lst_Items.Get(i)
-		If Value = Item.Value Then
-			Dim xpnl_Background As B4XView = xpnl_ItemsBackground.GetView(i)
-			Return CreateAS_BottomActionSheet_ItemViews(xpnl_Background,xpnl_Background.GetView(0),xpnl_Background.GetView(1),xpnl_Background.GetView(2))
+		
+		If lst_Items.Get(i) Is AS_BottomActionSheet_Item Then
+			
+			Dim Item As AS_BottomActionSheet_Item = lst_Items.Get(i)
+			If Value = Item.Value Then
+				Dim xpnl_Background As B4XView = xpnl_ItemsBackground.GetView(i)
+				Return CreateAS_BottomActionSheet_ItemViews(xpnl_Background,xpnl_Background.GetView(0),xpnl_Background.GetView(1),xpnl_Background.GetView(2))
+			End If
+			
+		Else
+				
+			For Each Item As AS_BottomActionSheet_Item In lst_Items.Get(i).As(List)
+				If Value = Item.Value Then
+					Dim xpnl_Background As B4XView = xpnl_ItemsBackground.GetView(i)
+					Return CreateAS_BottomActionSheet_ItemViews(xpnl_Background,xpnl_Background.GetView(0),xpnl_Background.GetView(1),xpnl_Background.GetView(2))
+				End If
+			Next
+				
 		End If
+		
 	Next
 	LogColor("GetItemViews: No item found for value " & Value,xui.Color_Red)
 	Return Null
@@ -263,10 +302,7 @@ Public Sub GetItemViews2(Index As Int) As AS_BottomActionSheet_ItemViews
 	Return CreateAS_BottomActionSheet_ItemViews(xpnl_Background,xpnl_Background.GetView(0),xpnl_Background.GetView(1),xpnl_Background.GetView(2))
 End Sub
 
-Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
-	
-	Dim xpnl_Background As B4XView = xui.CreatePanel("ItemBackground")
-	xpnl_Background.SetLayoutAnimated(0,0,0,xpnl_ItemsBackground.Width,Item.ItemProperties.Height)
+Private Sub BuildItemIntern(xpnl_ItemBackground As B4XView,Item As AS_BottomActionSheet_Item)
 	
 	Dim xlbl_Text As B4XView = CreateLabel("")
 	xlbl_Text.Text = Item.Text
@@ -274,18 +310,18 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 	xlbl_Text.SetTextAlignment("CENTER",Item.ItemProperties.TextHorizontalAlignment.ToUpperCase)
 	xlbl_Text.Font = Item.ItemProperties.xFont
 
-	'xpnl_Background.AddView(xlbl_Text,IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2 + Item.ItemProperties.IconWidthHeight,Item.ItemProperties.LeftGap),0,xpnl_Background.Width - (IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2,Item.ItemProperties.LeftGap))*2 + Item.ItemProperties.IconWidthHeight,xpnl_Background.Height)
+	'xpnl_ItemBackground.AddView(xlbl_Text,IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2 + Item.ItemProperties.IconWidthHeight,Item.ItemProperties.LeftGap),0,xpnl_ItemBackground.Width - (IIf(Item.Icon.IsInitialized,Item.ItemProperties.LeftGap*2,Item.ItemProperties.LeftGap))*2 + Item.ItemProperties.IconWidthHeight,xpnl_ItemBackground.Height)
 	
 	Dim leftGap As Int = IIf(Item.Icon.IsInitialized, Item.ItemProperties.LeftGap * 2 + Item.ItemProperties.IconWidthHeight, Item.ItemProperties.LeftGap)
-	Dim availableWidth As Int = xpnl_Background.Width - (leftGap * 2)
+	Dim availableWidth As Int = xpnl_ItemBackground.Width - (leftGap * 2)
 	Dim leftPosition As Int = leftGap
 	Dim textWidth As Int = availableWidth
-	xpnl_Background.AddView(xlbl_Text, leftPosition, 0, textWidth, xpnl_Background.Height)
+	xpnl_ItemBackground.AddView(xlbl_Text, leftPosition, 0, textWidth, xpnl_ItemBackground.Height)
 	'xlbl_Text.Color = xui.Color_Red
 	Dim ARGB() As Int = GetARGB(Item.ItemProperties.SeperatorColor)
 	
 	Dim xpnl_Seperator As B4XView = xui.CreatePanel("")
-	xpnl_Background.AddView(xpnl_Seperator,0,xpnl_Background.Height - 2dip,xpnl_Background.Width,2dip)
+	xpnl_ItemBackground.AddView(xpnl_Seperator,0,xpnl_ItemBackground.Height - 2dip,xpnl_ItemBackground.Width,2dip)
 	
 	If Item.ItemProperties.SeperatorVisible And xpnl_ItemsBackground.NumberOfViews < lst_Items.Size -1 Then
 		xpnl_Seperator.Color = xui.Color_ARGB(30,ARGB(1),ARGB(2),ARGB(3))
@@ -294,7 +330,7 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 	End If
 	
 	Dim xiv_Icon As B4XView = CreateImageView
-	xpnl_Background.AddView(xiv_Icon,Item.ItemProperties.LeftGap,xpnl_Background.Height/2 - Item.ItemProperties.IconWidthHeight/2,Item.ItemProperties.IconWidthHeight,Item.ItemProperties.IconWidthHeight)
+	xpnl_ItemBackground.AddView(xiv_Icon,Item.ItemProperties.LeftGap,xpnl_ItemBackground.Height/2 - Item.ItemProperties.IconWidthHeight/2,Item.ItemProperties.IconWidthHeight,Item.ItemProperties.IconWidthHeight)
 	
 	Select Item.ItemProperties.TextHorizontalAlignment.ToUpperCase
 		Case "LEFT"
@@ -328,8 +364,8 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 			
 			Select Item.ItemProperties.IconHorizontalAlignment.ToUpperCase
 				Case getIconHorizontalAlignment_Auto, getIconHorizontalAlignment_Right
-					xiv_Icon.Left = xpnl_Body.Width - Item.ItemProperties.LeftGap - xiv_Icon.Width		
-					If Item.Icon.IsInitialized Then 
+					xiv_Icon.Left = xpnl_Body.Width - Item.ItemProperties.LeftGap - xiv_Icon.Width
+					If Item.Icon.IsInitialized Then
 						xlbl_Text.Left = Item.ItemProperties.LeftGap
 						xlbl_Text.Width = xlbl_Text.Width + Item.ItemProperties.LeftGap + xiv_Icon.Width
 					End If
@@ -349,7 +385,7 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 	Dim xiv_SmallIcon As B4XView = CreateImageView
 	'Dim xiv_SmallIcon As B4XView = xui.CreatePanel("")
 	'xiv_SmallIcon.Color = xui.Color_Red
-	xpnl_Background.AddView(xiv_SmallIcon,0,0,Item.ItemSmallIconProperties.WidthHeight,Item.ItemSmallIconProperties.WidthHeight)
+	xpnl_ItemBackground.AddView(xiv_SmallIcon,0,0,Item.ItemSmallIconProperties.WidthHeight,Item.ItemSmallIconProperties.WidthHeight)
 	xiv_SmallIcon.Visible = Item.SmallIcon.IsInitialized
 	If Item.SmallIcon.IsInitialized Then
 		Dim SmallIconLeft As Float
@@ -385,10 +421,41 @@ Private Sub CreateItemIntern(Item As AS_BottomActionSheet_Item)
 		
 	End If
 	
-	xpnl_Background.Tag = Item
-	xpnl_ItemsBackground.AddView(xpnl_Background,0,xpnl_Background.Height*xpnl_ItemsBackground.NumberOfViews,xpnl_ItemsBackground.Width,Item.ItemProperties.Height)
+	xpnl_ItemBackground.Tag = Item
 	
-	CustomDrawItem(Item,CreateAS_BottomActionSheet_ItemViews(xpnl_Background,xlbl_Text,xpnl_Seperator,xiv_Icon))
+	CustomDrawItem(Item,CreateAS_BottomActionSheet_ItemViews(xpnl_ItemBackground,xlbl_Text,xpnl_Seperator,xiv_Icon))
+	
+End Sub
+
+Private Sub CreateItemIntern(Item As Object)
+	
+	Dim xpnl_Background As B4XView = xui.CreatePanel("")
+	Dim ItemHeight As Float = 0
+	
+	If Item Is AS_BottomActionSheet_Item Then
+		
+		Dim ThisItem As AS_BottomActionSheet_Item = Item
+		ItemHeight = ThisItem.ItemProperties.Height
+		Dim xpnl_ItemBackground As B4XView = xui.CreatePanel("ItemBackground")
+		xpnl_Background.AddView(xpnl_ItemBackground,0,0,xpnl_ItemsBackground.Width,ItemHeight)
+		BuildItemIntern(xpnl_ItemBackground,ThisItem)
+		
+	Else If Item Is List Then
+			
+		For i = 0 To Item.As(List).Size -1
+			
+			Dim ItemWidth As Float = xpnl_ItemsBackground.Width/Item.As(List).Size
+			Dim ThisItem As AS_BottomActionSheet_Item = Item.As(List).Get(i)		
+			ItemHeight = ThisItem.ItemProperties.Height
+			Dim xpnl_ItemBackground As B4XView = xui.CreatePanel("ItemBackground")
+			xpnl_Background.AddView(xpnl_ItemBackground,ItemWidth*i,0,ItemWidth,ItemHeight)
+			BuildItemIntern(xpnl_ItemBackground,ThisItem)
+			
+		Next
+			
+	End If
+	
+	xpnl_ItemsBackground.AddView(xpnl_Background,0,xpnl_ItemBackground.Height*xpnl_ItemsBackground.NumberOfViews,xpnl_ItemsBackground.Width,ItemHeight)
 	
 End Sub
 

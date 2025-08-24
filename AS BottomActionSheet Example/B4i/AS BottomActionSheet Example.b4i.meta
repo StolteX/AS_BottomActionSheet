@@ -7,6 +7,6 @@ ModuleBreakpoints2=
 ModuleClosedNodes0=4
 ModuleClosedNodes1=
 ModuleClosedNodes2=
-NavigationStack=B4XMainPage,OpenLightDatePicker,67,6,AS_BottomActionSheet,setColor,339,0,B4XMainPage,B4XPage_Created,20,0,AS_BottomActionSheet,AddItem,130,0,AS_BottomActionSheet,Class_Globals,35,6,AS_BottomActionSheet,AddItemIntern,149,0,AS_BottomActionSheet,CreateAS_BottomActionSheet_ItemSmallIconProperties,565,0,AS_BottomActionSheet,CreateAS_BottomActionSheet_ItemViews,563,0,AS_BottomActionSheet,Initialize,106,0,B4XMainPage,OpenSheet,36,6
+NavigationStack=AS_BottomActionSheet,CreateAS_BottomActionSheet_ItemViews,563,0,AS_BottomActionSheet,Initialize,106,0,B4XMainPage,xlbl_OpenDarkPicker_Click,84,0,B4XMainPage,xlbl_OpenLightPicker_Click,94,0,B4XMainPage,OpenSheet,41,6,AS_BottomActionSheet,ShowPicker,192,0,Main,Application_Start,21,3
 SelectedBuild=0
 VisibleModules=2,1

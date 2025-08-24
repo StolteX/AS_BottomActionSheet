@@ -38,8 +38,16 @@ Private Sub OpenSheet(DarkMode As Boolean)
 	BottomActionSheet.ActionButtonVisible = True
 	BottomActionSheet.AddItem("Item #1",Null,0)
 	BottomActionSheet.AddItem("Item #2",Null,1)
-	BottomActionSheet.AddItem("Item #3",Null,2)
-	BottomActionSheet.AddItem2("Item #4",Null,BottomActionSheet.FontToBitmap(Chr(0xE897),True,25dip,IIf(DarkMode,xui.Color_White,xui.Color_Black)),4)
+	
+	Dim ItemList As List : ItemList.Initialize
+	ItemList.Add(BottomActionSheet.CreateItem("Item #3",Null,1))
+	ItemList.Add(BottomActionSheet.CreateItem("Item #4",Null,1))
+	ItemList.Add(BottomActionSheet.CreateItem("Item #5",Null,1))
+	BottomActionSheet.AddItemRow(ItemList)
+	
+	
+	BottomActionSheet.AddItem("Item #5",Null,2)
+	BottomActionSheet.AddItem2("Item #6",Null,BottomActionSheet.FontToBitmap(Chr(0xE897),True,25dip,IIf(DarkMode,xui.Color_White,xui.Color_Black)),4)
 	
 '	BottomActionSheet.AddItem("Item #1",BottomActionSheet.FontToBitmap(Chr(0xE190),True,30dip,xui.Color_White),0)
 '	BottomActionSheet.AddItem("Item #2",BottomActionSheet.FontToBitmap(Chr(0xE190),True,30dip,xui.Color_White),1)
